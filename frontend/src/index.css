@@ -1,0 +1,120 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* ============================================================
+   AURA PRIVATE WEALTH DESIGN SYSTEM
+   Visual Identity: Quiet Luxury
+   Typography: Cormorant Garamond / Inter / DM Sans
+   ============================================================ */
+
+/* ── Dark Theme (Default) ─────────────────────────────────── */
+:root,
+html[data-theme="dark"] {
+  --t-bg:           #111914;
+  --t-surface:      #15201A;
+  --t-card:         #19251E;
+  --t-elevated:     #223229;
+  --t-border:       #304036;
+  --t-muted:        #A1AA9F;
+  --t-text:         #F0F1E9;
+  --t-text-soft:    #C8CDC5;
+  --t-primary:      #A5C6A9;
+  --t-primary-dark: #82a887;
+  --t-accent:       #C5AD7B;
+  --t-secondary:    #C5AD7B;
+  --t-danger:       #E06D6D;
+  --t-warning:      #D4AF37;
+  
+  --t-chart-1:      #A5C6A9;
+  --t-chart-2:      #C5AD7B;
+  --t-chart-3:      #6B9B78;
+  --t-chart-4:      #D9C59B;
+  --t-chart-5:      #E06D6D;
+  --t-chart-6:      #86A892;
+  
+  --t-shadow:       rgba(0, 0, 0, 0.45);
+  --t-scrollbar-bg: #111914;
+  --t-scrollbar:    #304036;
+}
+
+/* ── Light Theme ─────────────────────────────────────────── */
+html[data-theme="light"] {
+  --t-bg:           #F2EFE7;
+  --t-surface:      #EAE6DD;
+  --t-card:         #FAF9F5;
+  --t-elevated:     #FFFFFF;
+  --t-border:       #DEDACF;
+  --t-muted:        #77796F;
+  --t-text:         #202923;
+  --t-text-soft:    #4A544E;
+  --t-primary:      #183D32;
+  --t-primary-dark: #0F2720;
+  --t-accent:       #B49A68;
+  --t-secondary:    #B49A68;
+  --t-danger:       #9E4747;
+  --t-warning:      #B49A68;
+  
+  --t-chart-1:      #183D32;
+  --t-chart-2:      #B49A68;
+  --t-chart-3:      #5B7A68;
+  --t-chart-4:      #8F7649;
+  --t-chart-5:      #9E4747;
+  --t-chart-6:      #586B60;
+  
+  --t-shadow:       rgba(24, 61, 50, 0.06);
+  --t-scrollbar-bg: #F2EFE7;
+  --t-scrollbar:    #DEDACF;
+}
+
+/* ── Base Styles ──────────────────────────────────────────── */
+@layer base {
+  * {
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.15s ease;
+  }
+
+  body {
+    background-color: var(--t-bg);
+    color: var(--t-text);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, .font-editorial {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    letter-spacing: -0.015em;
+  }
+}
+
+/* ── Typography Helpers ───────────────────────────────────── */
+.num-font {
+  font-family: 'DM Sans', Inter, sans-serif;
+  font-feature-settings: "tnum" 1, "cv01" 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* ── Quiet Luxury Card Utilities ──────────────────────────── */
+.glass-card {
+  background-color: var(--t-card);
+  border: 1px solid var(--t-border);
+  box-shadow: 0 1px 3px var(--t-shadow);
+  border-radius: 1rem;
+}
+
+.glass-card-hover {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.glass-card-hover:hover {
+  border-color: var(--t-accent);
+  box-shadow: 0 6px 20px -4px var(--t-shadow);
+}
+
+/* ── Scrollbars ───────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--t-scrollbar-bg); }
+::-webkit-scrollbar-thumb { background: var(--t-scrollbar); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--t-accent); }

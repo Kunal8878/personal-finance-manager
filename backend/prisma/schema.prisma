@@ -1,0 +1,252 @@
+// Prisma Database Schema for Personal Finance Manager
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   String   @id @default(uuid())
+  email                String   @unique
+  passwordHash         String
+  name                 String
+  currency             String   @default("INR")
+  panMasked            String?
+  aadhaarMasked        String?
+  financialHealthScore Int      @default(0) // 0 - 100 Scale
+  riskTolerance        String   @default("MEDIUM") // LOW, MEDIUM, HIGH
+  monthlyTargetSavings Float    @default(0.0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  accounts      Account[]
+  categories    Category[]
+  transactions  Transaction[]
+  budgets       Budget[]
+  goals         Goal[]
+  investments   Investment[]
+  loans         Loan[]
+  loanPayments  LoanPayment[]
+  subscriptions Subscription[]
+  auditLogs     AuditLog[]
+  chatHistory   AIChatHistory[]
+
+  @@map("users")
+}
+
+model Account {
+  id          String   @id @default(uuid())
+  userId      String
+  name        String
+  type        String   // BANK, SAVINGS, CURRENT, CASH, CREDIT_CARD, DIGITAL_WALLET, OTHER
+  institution String?
+  balance     Float    @default(0.0)
+  currency    String   @default("USD")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user                  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactionsFrom      Transaction[] @relation("FromAccount")
+  transactionsTo        Transaction[] @relation("ToAccount")
+  subscriptions         Subscription[]
+
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  userId    String?  // Nullable: System default categories have null userId
+  name      String
+  type      String   // INCOME, EXPENSE, TRANSFER
+  icon      String   @default("tag")
+  color     String   @default("#10b981")
+  createdAt DateTime @default(now())
+
+  user          User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions  Transaction[]
+  budgets       Budget[]
+  subscriptions Subscription[]
+
+  @@index([userId])
+  @@map("categories")
+}
+
+model Transaction {
+  id                    String    @id @default(uuid())
+  userId                String
+  accountId             String
+  toAccountId           String?   // Present only for TRANSFER type
+  categoryId            String?
+  amount                Float     // Original amount
+  currency              String    @default("INR") // Original currency code: 'INR', 'USD', 'EUR', 'GBP'
+  currencySymbol        String    @default("₹")   // Original currency symbol
+  baseCurrency          String    @default("INR") // Consolidated reporting base currency
+  exchangeRate          Float     @default(1.0)   // Historical exchange rate to base currency
+  convertedAmount       Float?    // Pre-calculated amount in base currency
+  exchangeRateTimestamp DateTime? @default(now())
+  needsReconciliation   Boolean   @default(false)
+  type                  String    // INCOME, EXPENSE, TRANSFER, REFUND, INVESTMENT, LOAN_PAYMENT
+  date                  DateTime
+  notes                 String?
+  receiptUrl            String?
+  isRecurring           Boolean   @default(false)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account               Account   @relation("FromAccount", fields: [accountId], references: [id], onDelete: Cascade)
+  toAccount             Account?  @relation("ToAccount", fields: [toAccountId], references: [id], onDelete: SetNull)
+  category              Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([accountId])
+  @@index([date])
+  @@index([currency])
+  @@map("transactions")
+}
+
+model Budget {
+  id         String   @id @default(uuid())
+  userId     String
+  categoryId String
+  amount     Float
+  period     String   @default("MONTHLY") // MONTHLY, YEARLY
+  startDate  DateTime
+  endDate    DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("budgets")
+}
+
+model Goal {
+  id            String   @id @default(uuid())
+  userId        String
+  name          String
+  targetAmount  Float
+  currentAmount Float    @default(0.0)
+  targetDate    DateTime
+  category      String   @default("EMERGENCY_FUND") // EMERGENCY_FUND, VACATION, EDUCATION, VEHICLE, HOME, INVESTMENT, CUSTOM
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("goals")
+}
+
+model Investment {
+  id             String   @id @default(uuid())
+  userId         String
+  name           String
+  type           String   // STOCKS, MUTUAL_FUNDS, ETFS, FIXED_DEPOSIT, GOLD, BONDS, OTHER
+  investedAmount Float
+  currentValue   Float
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("investments")
+}
+
+model Loan {
+  id                 String   @id @default(uuid())
+  userId             String
+  name               String
+  type               String   // BORROWED, LENT
+  principal          Float
+  interestRate       Float    // Annual percentage rate
+  tenureMonths       Int
+  emiAmount          Float
+  remainingPrincipal Float
+  startDate          DateTime
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments LoanPayment[]
+
+  @@index([userId])
+  @@map("loans")
+}
+
+model LoanPayment {
+  id                 String   @id @default(uuid())
+  loanId             String
+  userId             String
+  amount             Float
+  paymentDate        DateTime
+  principalComponent Float
+  interestComponent  Float
+  notes              String?
+  createdAt          DateTime @default(now())
+
+  loan Loan @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([loanId])
+  @@map("loan_payments")
+}
+
+model Subscription {
+  id             String   @id @default(uuid())
+  userId         String
+  name           String
+  cost           Float
+  billingCycle   String   @default("MONTHLY") // MONTHLY, YEARLY
+  nextBillingDate DateTime
+  categoryId     String?
+  accountId      String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  account  Account?  @relation(fields: [accountId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@map("subscriptions")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  resource  String
+  ipAddress String?
+  timestamp DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("audit_logs")
+}
+
+model AIChatHistory {
+  id          String   @id @default(uuid())
+  userId      String
+  sender      String   // USER, AI
+  message     String
+  suggestions String?  // JSON stringified suggestions or expense actions
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("ai_chat_history")
+}
